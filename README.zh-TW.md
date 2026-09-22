@@ -4,6 +4,10 @@
 
 一套專為 Windows 設計的資料夾色彩自訂與管理工具。透過提取 Windows 原生高解析度資料夾圖示，並採用立體光影 HLS 保真演算法，為資料夾換上紅、橘、綠、藍、紫等各式色彩，同時保有 Windows 官方圖示的細緻光影漸層、高光邊條與柔和陰影。
 
+<p align="center">
+  <img src="./assets/app_screenshot.png" alt="FolderColor 桌面操作介面" width="720">
+</p>
+
 ---
 
 ## 支援的四種使用方式
@@ -128,6 +132,7 @@ FolderColor/
 ├── FolderColors.dll          # 包含 16 種圖示資源的 DLL 檔案 (可直接在 Windows 瀏覽對話框載入)
 ├── base_folder.png           # 256x256 Windows 原生母版圖示快取
 ├── icons/                    # 存放所有產出的多規格 .ico 檔案 (16~256px)
+├── assets/                   # 介面截圖與視覺資源
 ├── README.md                 # 英文說明文件
 └── README.zh-TW.md           # 繁體中文說明文件
 ```

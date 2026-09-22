@@ -4,6 +4,10 @@
 
 A lightweight, native Windows folder customization and coloring tool. It extracts high-resolution Windows folder icons and applies an HLS color fidelity algorithm to transform folder colors while fully preserving official Windows Fluent lighting gradients, top edge highlights, backplate depth, and soft alpha shadows.
 
+<p align="center">
+  <img src="./assets/app_screenshot.png" alt="FolderColor Desktop Application" width="720">
+</p>
+
 ---
 
 ## Features
@@ -153,6 +157,7 @@ FolderColor/
 ├── FolderColors.dll          # Compiled Win32 DLL containing 16 icon resources
 ├── base_folder.png           # 256x256 Windows base folder template cache
 ├── icons/                    # Directory containing all multi-size .ico files (16px - 256px)
+├── assets/                   # Screenshots and graphical assets
 ├── README.md                 # English documentation
 └── README.zh-TW.md           # Traditional Chinese documentation
 ```
