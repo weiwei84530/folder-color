@@ -1,4 +1,4 @@
-# AGENT.md - FolderColor Architecture & Engineering Guidelines
+# AGENTS.md - FolderColor Architecture & Engineering Guidelines
 
 This document serves as the primary system context, architecture blueprint, and engineering guide for AI agents and developers working on the **FolderColor** repository.
 
@@ -46,8 +46,7 @@ FolderColor/
 ├── icons/                    # Directory containing all multi-size .ico files (16px - 256px)
 ├── README.md                 # Primary English documentation
 ├── README.zh-TW.md           # Traditional Chinese documentation
-├── AGENT.md                  # Comprehensive AI agent & developer guidelines (this file)
-├── GEMINI.md                 # AI assistant entry point referring to AGENT.md
+├── AGENTS.md                 # Comprehensive AI agent & developer guidelines (this file)
 ├── LICENSE                   # MIT License
 └── .gitignore                # Git ignore configuration
 ```
