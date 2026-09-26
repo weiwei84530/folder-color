@@ -386,7 +386,7 @@ class FolderColorApp(tk.Tk):
         self.selected_color_name.set(preset["name"])
         self.selected_hex.set(preset["hex"])
         self.selected_rgb = preset["rgb"]
-        self.selected_ico_path = os.path.join(core.ICONS_DIR, f"{preset['key']}.ico")
+        self.selected_ico_path = core.get_icon_path(preset["key"])
         self._update_preview()
         self.status_var.set(f"Selected color: {preset['name']} ({preset['hex']})")
 
@@ -404,7 +404,8 @@ class FolderColorApp(tk.Tk):
 
             # Generate and cache custom ico
             custom_name = f"custom_{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}.ico"
-            custom_path = os.path.join(core.ICONS_DIR, custom_name)
+            target_dir = core.PERMANENT_ICONS_DIR if os.path.exists(core.PERMANENT_ICONS_DIR) else core.ICONS_DIR
+            custom_path = os.path.join(target_dir, custom_name)
             if not os.path.exists(custom_path):
                 colored_img = core.recolor_folder(self.base_folder_img, rgb)
                 core.save_multisize_ico(colored_img, custom_path)
@@ -520,16 +521,17 @@ class FolderColorApp(tk.Tk):
 
     def _on_install_permanent(self):
         try:
-            dest = core.install_library_to_permanent_location()
-            self.status_var.set(f"Installed library to persistent directory: {dest}")
+            dest = core.install_app_to_permanent_location()
+            if self.context_menu_var.get():
+                context_menu.install_context_menu(dest)
+            self.status_var.set(f"Installed app and library to persistent directory: {dest}")
             messagebox.showinfo(
                 "Installed to %LocalAppData%",
-                f"Successfully copied FolderColors.dll and all icons to:\n\n"
+                f"Successfully installed FolderColor to persistent system location:\n\n"
                 f"{dest}\n\n"
-                f"Tip for Windows Native 'Change Icon' Dialog:\n"
-                f"You can directly enter:\n"
-                f"%LOCALAPPDATA%\\FolderColor\\FolderColors.dll\n\n"
-                f"Even if this project directory is moved or removed, existing customized folders will continue to work permanently.",
+                f"Features:\n"
+                f"1. Context menu and custom folder icons are now completely decoupled from this repository.\n"
+                f"2. You can safely relocate or delete the git repository without breaking folder icons or right-click menus.",
             )
         except Exception as e:
             messagebox.showerror("Installation Failed", f"Error copying to persistent directory:\n{e}")

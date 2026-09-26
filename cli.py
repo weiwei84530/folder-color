@@ -6,6 +6,7 @@ and Explorer context menu management.
 
 import os
 import sys
+import shutil
 import argparse
 import re
 from typing import Optional, Tuple
@@ -45,16 +46,18 @@ def resolve_color_to_ico(color_input: str) -> Tuple[str, int]:
             or key_norm == item["key"].replace("folder_", "")
             or key_norm in item["name"].lower()
         ):
-            ico_path = os.path.join(core.ICONS_DIR, f"{item['key']}.ico")
+            ico_path = core.get_icon_path(item["key"])
             if not os.path.exists(ico_path):
                 core.generate_all_presets()
+                ico_path = core.get_icon_path(item["key"])
             return (ico_path, 0)
 
     # 2. Match against custom Hex code
     rgb = parse_hex_color(color_input)
     if rgb:
         custom_name = f"custom_{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}.ico"
-        custom_path = os.path.join(core.ICONS_DIR, custom_name)
+        target_dir = core.PERMANENT_ICONS_DIR if os.path.exists(core.PERMANENT_ICONS_DIR) else core.ICONS_DIR
+        custom_path = os.path.join(target_dir, custom_name)
         if not os.path.exists(custom_path):
             base_img = core.get_base_folder_image()
             colored_img = core.recolor_folder(base_img, rgb)
@@ -117,8 +120,27 @@ def cmd_build(args):
     print("Build complete! All icons generated in 'icons/' and 'FolderColors.dll' updated.")
 
 
+def cmd_install(args):
+    dest = core.install_app_to_permanent_location()
+    context_menu.install_context_menu(dest)
+    print("Successfully installed FolderColor to persistent system location!")
+    print(f"Path: {dest}")
+    print("Windows Explorer context menu registered to persistent location.")
+    print("Moving or renaming the repository folder will no longer affect functionality.")
+
+
+def cmd_uninstall(args):
+    context_menu.uninstall_context_menu()
+    print("Successfully unregistered Windows Explorer right-click context menu!")
+    if getattr(args, "purge", False):
+        if os.path.exists(core.PERMANENT_LIB_DIR):
+            shutil.rmtree(core.PERMANENT_LIB_DIR, ignore_errors=True)
+            print(f"Removed persistent installation files: {core.PERMANENT_LIB_DIR}")
+
+
 def cmd_install_menu(args):
-    context_menu.install_context_menu()
+    dest = core.install_app_to_permanent_location()
+    context_menu.install_context_menu(dest)
     print("Successfully registered Windows Explorer right-click context menu!")
 
 
@@ -139,6 +161,21 @@ def main():
         description="Windows Folder Color Customization Tool (FolderColor CLI)"
     )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand")
+
+    # install
+    parser_install = subparsers.add_parser(
+        "install", help="Install FolderColor permanently to %%LOCALAPPDATA%% and register context menu"
+    )
+    parser_install.set_defaults(func=cmd_install)
+
+    # uninstall
+    parser_uninstall = subparsers.add_parser(
+        "uninstall", help="Remove context menu and optionally purge %%LOCALAPPDATA%%\\FolderColor"
+    )
+    parser_uninstall.add_argument(
+        "--purge", action="store_true", help="Also remove files from %%LOCALAPPDATA%%\\FolderColor"
+    )
+    parser_uninstall.set_defaults(func=cmd_uninstall)
 
     # apply
     parser_apply = subparsers.add_parser("apply", help="Apply custom icon color to specified folder")

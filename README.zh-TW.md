@@ -51,6 +51,9 @@
 ### 方式 4：CLI 命令列快速操作
 適合腳本自動化或進階開發者：
 ```cmd
+# 完整安裝應用與圖示至常駐目錄並註冊右鍵選單 (推薦，徹底解耦專案路徑)
+python cli.py install
+
 # 為資料夾套用紅色
 python cli.py apply "C:\MyProject" red
 
@@ -66,8 +69,8 @@ python cli.py list
 # 重新批次產出所有多規格 ICO 與編譯 FolderColors.dll
 python cli.py build
 
-# 將圖示庫安裝/同步至 Windows 常駐目錄 (推薦，移動專案不失效)
-python cli.py install-lib
+# 解除註冊右鍵選單並清理常駐檔案
+python cli.py uninstall --purge
 ```
 
 ---
@@ -75,22 +78,21 @@ python cli.py install-lib
 ## 移動專案資料夾的影響與推薦存放位置
 
 ### 1. 如果移動專案資料夾會受影響嗎？
-**會受到影響**。
-Windows 為資料夾套用圖示時，會在目標資料夾內寫入隱藏的 `desktop.ini`，記錄圖示的絕對路徑（例如 `IconResource=D:\Antigravity\FolderColor\FolderColors.dll,0`）。
-如果日後將專案資料夾搬移（例如改到 `E:\` 或更名），Windows 會因找不到該路徑下的 DLL 檔案，而自動退回預設的黃色資料夾。
+在尚未執行常駐安裝前**會受到影響**。
+Windows 為資料夾套用圖示時，會在目標資料夾內寫入隱藏的 `desktop.ini`，記錄圖示的絕對路徑。若選單直接指向 Git 倉庫目錄，搬移後路徑會失效。
 
-### 2. 官方推薦存放位置：`%LOCALAPPDATA%\FolderColor`
-建議將 `FolderColors.dll` 與 `icons/` 存放在目前使用者標準常駐目錄：
+### 2. 官方推薦存放位置：`%LOCALAPPDATA%\FolderColor`（C 碟）
+FolderColor 支援一鍵常駐安裝至使用者的本機應用程式目錄：
 `C:\Users\<使用者名稱>\AppData\Local\FolderColor`（即環境變數 `%LOCALAPPDATA%\FolderColor`）
 
 **優勢**：
-- **路徑永久固定**：不受 Git 工作區、原始碼移動或磁碟槽重構影響。
-- **免管理員權限**：一般使用者權限即可自由讀寫。
+- **徹底解耦**：所有執行腳本、右鍵選單註冊與資料夾圖示設定皆直接錨定於 C 碟 `%LOCALAPPDATA%`，Git 專案就算從 E 碟搬移到其他磁碟、更名甚至刪除，所有右鍵功能與已改色的資料夾圖示依然 100% 正常運作。
+- **免管理員權限**：完全鎖定在目前使用者空間，不需要 UAC 系統管理員權限。
 - **支援 Windows 環境變數**：在 Windows 原生「變更圖示」視窗中，可直接在檔案路徑輸入 `%LOCALAPPDATA%\FolderColor\FolderColors.dll`。
 
 ### 3. 如何一鍵安裝至常駐目錄？
-- **GUI 方式**：開啟換色介面，點擊視窗右下角 **「Install to %LocalAppData% (Permanent)」**。
-- **CLI 方式**：執行 `python cli.py install-lib`。
+- **CLI 方式**：執行 `python cli.py install`。
+- **GUI 方式**：開啟桌面換色介面，點擊視窗右下角 **「Install to %LocalAppData% (Permanent)」**。
 
 ---
 

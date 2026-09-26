@@ -70,6 +70,9 @@ Change folder colors directly from Windows Explorer with a single click:
 Ideal for developer scripting, CI workflows, and terminal users:
 
 ```cmd
+# Fully install app to %LOCALAPPDATA% and register context menu (Decoupled from repo location)
+python cli.py install
+
 # Apply preset color
 python cli.py apply "C:\MyProject" red
 
@@ -85,8 +88,8 @@ python cli.py list
 # Batch generate all multi-resolution ICOs and compile FolderColors.dll
 python cli.py build
 
-# Install DLL & icons to persistent Windows local app data (%LOCALAPPDATA%\FolderColor)
-python cli.py install-lib
+# Uninstall context menu and optionally purge %LOCALAPPDATA% files
+python cli.py uninstall --purge
 ```
 
 ---

@@ -7,7 +7,7 @@ Uses Windows native ExtendedSubCommandsKey mechanism to provide clean cascading 
 import os
 import sys
 import winreg
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import core
 
@@ -54,64 +54,66 @@ def _delete_reg_key_recursive(root_key, subkey_path: str):
         pass
 
 
-def install_context_menu():
+def install_context_menu(target_dir: Optional[str] = None):
     r"""
     Register standard cascading context menu under HKCU:
     - Main key sets ExtendedSubCommandsKey pointing to Directory\shell\FolderColor
     - Avoids empty SubCommands to prevent broken/empty submenus on Windows 10/11
     - Sub-items are placed under Shell\... with MUIVerb, Icon, and command
+    - Installs to %LOCALAPPDATA%\FolderColor by default to decouple from repository location
     """
-    pythonw = _get_pythonw_path()
-    cli_path = os.path.join(core.BASE_DIR, "cli.py")
-    gui_path = os.path.join(core.BASE_DIR, "gui.py")
+    if target_dir is None:
+        target_dir = core.install_app_to_permanent_location()
 
-    # Ensure icon assets and DLL exist
-    if not os.path.exists(core.DLL_PATH):
-        core.generate_all_presets()
+    pythonw = _get_pythonw_path()
+    cli_path = os.path.join(target_dir, "cli.py")
+    gui_path = os.path.join(target_dir, "gui.py")
+    icons_dir = os.path.join(target_dir, "icons")
+    dll_path = os.path.join(target_dir, "FolderColors.dll")
 
     # Clean previous registry entries first
     uninstall_context_menu()
 
     # 1. Submenu for right-clicking on a folder (target %1)
     sub_items_folder: List[Tuple[str, str, str, str]] = [
-        ("01_red", "Red", os.path.join(core.ICONS_DIR, "folder_red.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_red'),
-        ("02_orange", "Orange", os.path.join(core.ICONS_DIR, "folder_orange.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_orange'),
-        ("03_amber", "Amber", os.path.join(core.ICONS_DIR, "folder_amber.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_amber'),
-        ("04_green", "Green", os.path.join(core.ICONS_DIR, "folder_green.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_green'),
-        ("05_mint", "Mint", os.path.join(core.ICONS_DIR, "folder_mint.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_mint'),
-        ("06_blue", "Blue", os.path.join(core.ICONS_DIR, "folder_blue.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_blue'),
-        ("07_purple", "Purple", os.path.join(core.ICONS_DIR, "folder_purple.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_purple'),
-        ("08_pink", "Pink", os.path.join(core.ICONS_DIR, "folder_pink.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_pink'),
-        ("09_charcoal", "Charcoal", os.path.join(core.ICONS_DIR, "folder_charcoal.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_charcoal'),
-        ("10_reset", "Restore Default Yellow", os.path.join(core.ICONS_DIR, "folder_yellow.ico"), f'"{pythonw}" "{cli_path}" reset "%1"'),
-        ("11_custom", "More Colors & Settings...", f"{core.DLL_PATH},3", f'"{pythonw}" "{gui_path}" "%1"'),
+        ("01_red", "Red", os.path.join(icons_dir, "folder_red.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_red'),
+        ("02_orange", "Orange", os.path.join(icons_dir, "folder_orange.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_orange'),
+        ("03_amber", "Amber", os.path.join(icons_dir, "folder_amber.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_amber'),
+        ("04_green", "Green", os.path.join(icons_dir, "folder_green.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_green'),
+        ("05_mint", "Mint", os.path.join(icons_dir, "folder_mint.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_mint'),
+        ("06_blue", "Blue", os.path.join(icons_dir, "folder_blue.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_blue'),
+        ("07_purple", "Purple", os.path.join(icons_dir, "folder_purple.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_purple'),
+        ("08_pink", "Pink", os.path.join(icons_dir, "folder_pink.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_pink'),
+        ("09_charcoal", "Charcoal", os.path.join(icons_dir, "folder_charcoal.ico"), f'"{pythonw}" "{cli_path}" apply "%1" folder_charcoal'),
+        ("10_reset", "Restore Default Yellow", os.path.join(icons_dir, "folder_yellow.ico"), f'"{pythonw}" "{cli_path}" reset "%1"'),
+        ("11_custom", "More Colors & Settings...", f"{dll_path},3", f'"{pythonw}" "{gui_path}" "%1"'),
     ]
 
-    _create_cascading_menu(MENU_PARENT_PATH, SUBCOMMANDS_REF, sub_items_folder)
+    _create_cascading_menu(MENU_PARENT_PATH, SUBCOMMANDS_REF, sub_items_folder, dll_path)
 
     # 2. Submenu for right-clicking inside folder empty background (target %V)
     sub_items_bg: List[Tuple[str, str, str, str]] = [
-        ("01_red", "Red", os.path.join(core.ICONS_DIR, "folder_red.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_red'),
-        ("02_orange", "Orange", os.path.join(core.ICONS_DIR, "folder_orange.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_orange'),
-        ("03_amber", "Amber", os.path.join(core.ICONS_DIR, "folder_amber.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_amber'),
-        ("04_green", "Green", os.path.join(core.ICONS_DIR, "folder_green.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_green'),
-        ("05_mint", "Mint", os.path.join(core.ICONS_DIR, "folder_mint.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_mint'),
-        ("06_blue", "Blue", os.path.join(core.ICONS_DIR, "folder_blue.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_blue'),
-        ("07_purple", "Purple", os.path.join(core.ICONS_DIR, "folder_purple.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_purple'),
-        ("08_pink", "Pink", os.path.join(core.ICONS_DIR, "folder_pink.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_pink'),
-        ("09_charcoal", "Charcoal", os.path.join(core.ICONS_DIR, "folder_charcoal.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_charcoal'),
-        ("10_reset", "Restore Default Yellow", os.path.join(core.ICONS_DIR, "folder_yellow.ico"), f'"{pythonw}" "{cli_path}" reset "%V"'),
-        ("11_custom", "More Colors & Settings...", f"{core.DLL_PATH},3", f'"{pythonw}" "{gui_path}" "%V"'),
+        ("01_red", "Red", os.path.join(icons_dir, "folder_red.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_red'),
+        ("02_orange", "Orange", os.path.join(icons_dir, "folder_orange.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_orange'),
+        ("03_amber", "Amber", os.path.join(icons_dir, "folder_amber.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_amber'),
+        ("04_green", "Green", os.path.join(icons_dir, "folder_green.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_green'),
+        ("05_mint", "Mint", os.path.join(icons_dir, "folder_mint.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_mint'),
+        ("06_blue", "Blue", os.path.join(icons_dir, "folder_blue.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_blue'),
+        ("07_purple", "Purple", os.path.join(icons_dir, "folder_purple.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_purple'),
+        ("08_pink", "Pink", os.path.join(icons_dir, "folder_pink.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_pink'),
+        ("09_charcoal", "Charcoal", os.path.join(icons_dir, "folder_charcoal.ico"), f'"{pythonw}" "{cli_path}" apply "%V" folder_charcoal'),
+        ("10_reset", "Restore Default Yellow", os.path.join(icons_dir, "folder_yellow.ico"), f'"{pythonw}" "{cli_path}" reset "%V"'),
+        ("11_custom", "More Colors & Settings...", f"{dll_path},3", f'"{pythonw}" "{gui_path}" "%V"'),
     ]
 
-    _create_cascading_menu(BACKGROUND_PARENT_PATH, BACKGROUND_SUBCOMMANDS_REF, sub_items_bg)
+    _create_cascading_menu(BACKGROUND_PARENT_PATH, BACKGROUND_SUBCOMMANDS_REF, sub_items_bg, dll_path)
 
 
-def _create_cascading_menu(parent_path: str, subcommands_ref: str, items: List[Tuple[str, str, str, str]]):
+def _create_cascading_menu(parent_path: str, subcommands_ref: str, items: List[Tuple[str, str, str, str]], dll_path: str):
     """Create cascading submenu structure following Windows Shell specifications."""
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, parent_path) as main_key:
         winreg.SetValueEx(main_key, "MUIVerb", 0, winreg.REG_SZ, "Folder Color")
-        winreg.SetValueEx(main_key, "Icon", 0, winreg.REG_SZ, f"{core.DLL_PATH},0")
+        winreg.SetValueEx(main_key, "Icon", 0, winreg.REG_SZ, f"{dll_path},0")
         winreg.SetValueEx(main_key, "ExtendedSubCommandsKey", 0, winreg.REG_SZ, subcommands_ref)
 
     shell_sub_path = f"{parent_path}\\Shell"

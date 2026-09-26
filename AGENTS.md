@@ -61,7 +61,9 @@ The engine of the system. Contains all low-level Win32 calls and image processin
 - `save_multisize_ico(img, output_path)`: Exports multi-resolution ICO containing 16x16, 24x24, 32x32, 48x48, 64x64, 128x128, and 256x256 bitmaps.
 - `build_icon_res(ico_files, output_res_path)`: Generates Win32 binary resource files (`RT_ICON` = 3, `RT_GROUP_ICON` = 14) with proper 4-byte padding and entry offset headers.
 - `compile_icon_dll(ico_files, output_dll_path)`: Invokes Windows built-in `csc.exe` with `/win32res` to compile `FolderColors.dll`.
-- `install_library_to_permanent_location()`: Copies DLL and icons to `%LOCALAPPDATA%\FolderColor` to prevent broken paths if repo is relocated.
+- `install_app_to_permanent_location()`: Copies application scripts, assets, DLL, and icons to `%LOCALAPPDATA%\FolderColor` to decouple right-click menus and customized folders from repository path.
+- `install_library_to_permanent_location()`: Backward-compatible alias for `install_app_to_permanent_location()`.
+- `get_icon_path(key)` / `get_dll_path()`: Returns icon/DLL paths, prioritizing the permanent `%LOCALAPPDATA%\FolderColor` directory.
 - `apply_folder_icon(folder_path, icon_source_path, icon_index)`: Uses `SHGetSetFolderCustomSettings` with `FCS_FORCEWRITE` and broadcasts `SHCNE_UPDATEITEM` + `SHCNE_ASSOCCHANGED`.
 - `reset_folder_icon(folder_path)`: Clears folder settings via Shell API, removes `desktop.ini`, removes `ReadOnly` and `System` folder attributes, and broadcasts refresh notifications.
 - `get_current_folder_icon(folder_path)`: Reads active icon path and index via `SHGetSetFolderCustomSettings(..., FCS_READ)`.
@@ -72,21 +74,24 @@ Desktop front-end built on Tkinter:
 - Presents a 4x4 preset palette grid with pre-rendered 22x22 button thumbnails.
 - Provides real-time preview of recolored icons using PIL image resizing and `ImageTk.PhotoImage`.
 - Integrates native OS color chooser (`colorchooser.askcolor`) with dynamic on-demand ICO generation for custom Hex colors.
-- Provides toggle switch for Windows Explorer right-click menu integration.
+- Provides toggle switch for Windows Explorer right-click menu integration (targeting decoupled `%LOCALAPPDATA%` installation).
 
 #### `cli.py`
 Command-line interface exposing core functions through subcommands:
-- `apply <folder> <color>`: Resolves color (preset name or `#RRGGBB` / `RRGGBB` hex) and applies icon.
+- `install`: Fully installs application and icons to `%LOCALAPPDATA%\FolderColor` and registers Explorer context menu.
+- `uninstall [--purge]`: Unregisters context menu and optionally removes permanent application files.
+- `apply <folder> <color>`: Resolves color (preset name or `#RRGGBB` / `RRGGBB` hex) and applies icon (prioritizing permanent icon paths).
 - `reset <folder>`: Cleans folder customizations and restores default yellow icon.
 - `list`: Displays tabular list of built-in presets and hex codes.
 - `build`: Re-runs batch recoloring and rebuilds `FolderColors.dll`.
-- `install-lib`: Syncs icon library to `%LOCALAPPDATA%\FolderColor`.
+- `install-lib`: Syncs icon library and app to `%LOCALAPPDATA%\FolderColor`.
 - `install-menu` / `uninstall-menu`: Manages Explorer context menu registry entries.
 
 #### `context_menu.py`
 Windows Explorer context menu integration:
 - Operates under `HKEY_CURRENT_USER\Software\Classes\Directory\shell\FolderColor` and `...\Directory\Background\shell\FolderColor`.
 - Utilizes `ExtendedSubCommandsKey` pointing to itself. *Critical rule: never write an empty `SubCommands` value, which causes Windows 10/11 to search `CommandStore` and renders submenus empty.*
+- Targets decoupled persistent app directory `%LOCALAPPDATA%\FolderColor` by default so moving the repository does not break menus.
 - Launches `cli.py` silently via `pythonw.exe` for seamless background execution.
 
 ---

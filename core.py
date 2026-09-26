@@ -338,10 +338,32 @@ def generate_all_presets():
     compile_icon_dll(ico_list, DLL_PATH)
 
 
-def install_library_to_permanent_location() -> str:
+def get_icon_path(key: str) -> str:
     """
-    Copy FolderColors.dll and icons/ library to Windows user local app data (%LOCALAPPDATA%\\FolderColor).
-    This provides a persistent standard path so folder icons remain valid even if the repository is moved.
+    Get icon path, preferring persistent %LOCALAPPDATA% directory if available,
+    otherwise falling back to repository ICONS_DIR.
+    """
+    perm_path = os.path.join(PERMANENT_ICONS_DIR, f"{key}.ico")
+    if os.path.exists(perm_path):
+        return perm_path
+    return os.path.join(ICONS_DIR, f"{key}.ico")
+
+
+def get_dll_path() -> str:
+    """
+    Get FolderColors.dll path, preferring persistent %LOCALAPPDATA% directory if available,
+    otherwise falling back to repository DLL_PATH.
+    """
+    if os.path.exists(PERMANENT_DLL_PATH):
+        return PERMANENT_DLL_PATH
+    return DLL_PATH
+
+
+def install_app_to_permanent_location() -> str:
+    """
+    Install the complete FolderColor application and icon library to Windows user local app data
+    (%LOCALAPPDATA%\\FolderColor).
+    This decouples system integration (context menu, customized folders) from the source repository location.
     """
     os.makedirs(PERMANENT_LIB_DIR, exist_ok=True)
     os.makedirs(PERMANENT_ICONS_DIR, exist_ok=True)
@@ -350,9 +372,21 @@ def install_library_to_permanent_location() -> str:
     if not os.path.exists(DLL_PATH):
         generate_all_presets()
 
-    if os.path.exists(DLL_PATH):
-        shutil.copy2(DLL_PATH, PERMANENT_DLL_PATH)
+    # Core scripts and assets to copy
+    app_files = [
+        "core.py",
+        "cli.py",
+        "gui.py",
+        "context_menu.py",
+        "base_folder.png",
+        "FolderColors.dll",
+    ]
+    for fname in app_files:
+        src_path = os.path.join(BASE_DIR, fname)
+        if os.path.exists(src_path):
+            shutil.copy2(src_path, os.path.join(PERMANENT_LIB_DIR, fname))
 
+    # Copy icons directory
     if os.path.exists(ICONS_DIR):
         for fname in os.listdir(ICONS_DIR):
             src_file = os.path.join(ICONS_DIR, fname)
@@ -360,6 +394,13 @@ def install_library_to_permanent_location() -> str:
                 shutil.copy2(src_file, os.path.join(PERMANENT_ICONS_DIR, fname))
 
     return PERMANENT_LIB_DIR
+
+
+def install_library_to_permanent_location() -> str:
+    """
+    Backward-compatible alias for install_app_to_permanent_location.
+    """
+    return install_app_to_permanent_location()
 
 
 def apply_folder_icon(folder_path: str, icon_source_path: str, icon_index: int = 0) -> bool:
